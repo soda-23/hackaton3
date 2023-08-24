@@ -4,6 +4,10 @@ from .serializers import PostDetailSerializer, PostListSerialize, CategorySerial
 import django_filters
 from rest_framework.permissions import AllowAny
 from .permissions import IsAuthorPermission, IsAdminOrIsAuthenticatedPermission
+from rest_framework.decorators import action
+from review.serializers import RatingSerializer
+from review.models import Rating
+from rest_framework.response import Response
 
 
 class CategoryListCreateView(generics.ListCreateAPIView):
@@ -43,6 +47,37 @@ class PostViewSet(viewsets.ModelViewSet):
     filterset_fields = ['tags__slug', 'category', 'author']
     search_fields = ['title', 'body'] 
     ordering_fields = ['created_at', 'title']   
+
+    @action(methods=['POST', 'PATCH'], detail=True)
+    def set_rating(self, request, pk=None):
+        # data = request.data
+        data = request.data.copy()
+        data['post'] = pk
+        serializer = RatingSerializer(data=data, context = {'request': request})
+        rating = Rating.objects.filter(
+            author=request.user, 
+            post=pk
+        ).first()
+
+        # print('============')
+        # print(rating)
+        # print('============')
+        if serializer.is_valid(raise_exception=True):
+            if rating and request.method == 'POST':
+                return Response(
+                    'Rating object exists', status=200
+                )
+            elif rating and request.method == 'PATCH':
+                serializer.update(rating, serializer.validated_data)
+                return Response(
+                    serializer.data, status=200
+                )
+            elif request.method == 'POST':
+                serializer.create(serializer.validated_data)
+                return Response(serializer.data, status=201)
+
+
+
 
     def get_serializer_class(self):
     
