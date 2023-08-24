@@ -3,7 +3,7 @@ from .models import Post, Category, Tag
 from .serializers import PostDetailSerializer, PostListSerialize, CategorySerializer, TagSerializer
 import django_filters
 from rest_framework.permissions import AllowAny
-from .permissions import IsAuthorPermission
+from .permissions import IsAuthorPermission, IsAdminOrIsAuthenticatedPermission
 
 
 class CategoryListCreateView(generics.ListCreateAPIView):
@@ -51,11 +51,8 @@ class PostViewSet(viewsets.ModelViewSet):
         return PostDetailSerializer
     
     def get_permissions(self):
-        # print('============')
-        # print(self.request.user)
-        # print('============')
         if self.action == 'create':
-            self.permission_classes = [AllowAny]
+            self.permission_classes = [IsAdminOrIsAuthenticatedPermission]
 
         elif self.action in ['update', 'partial_update', 'destroy']:
             self.permission_classes = [IsAuthorPermission]

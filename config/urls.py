@@ -31,7 +31,10 @@ shema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('docs/', shema_view.with_ui('swagger')),
+
     path('api/v1/', include('post.urls')),
     path('api/v1/account/', include('account.urls')),
-    path('docs/', shema_view.with_ui('swagger'))
+    path('api/v1/', include('review.urls')),
+    
 ]

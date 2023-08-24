@@ -1,40 +1,42 @@
-from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.serializers import ModelSerializer, ValidationError, ReadOnlyField
 from .models import Post, Category, Tag
 
 
-class ValidationMixin:
-    def validate_title(self, title):
-        if self.Meta.model.objects.filter(title=title).exists():
-            raise ValidationError(
-                'такое название уже существует'               
-            )
-        return title
-
-
-
-class CategorySerializer(ValidationMixin, ModelSerializer):
+class CategorySerializer(ModelSerializer):
 
     class Meta:
         model = Category
         fields = ('title',)
 
 
-class TagSerializer(ValidationMixin, ModelSerializer):
+class TagSerializer(ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ('title',)
+        fields = ('title', 'slug')
 
 
 
-class PostDetailSerializer(ValidationMixin, ModelSerializer):
+class PostDetailSerializer(ModelSerializer):
+    author = ReadOnlyField(source='author.name')
 
     class Meta:
         model = Post
         fields = '__all__'
 
+    def create(self, validated_data):
+        user = self.context.get('request').user
+        tags = validated_data.pop('tags', [])
+        post = Post.objects.create(author=user, **validated_data)
+        post.tags.add(*tags)
+        return post
 
-class PostListSerialize(ValidationMixin, ModelSerializer):
+
+       
+
+
+
+class PostListSerialize(ModelSerializer):
 
     class Meta:
         model = Post
