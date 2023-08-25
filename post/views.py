@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny
 from .permissions import IsAuthorPermission, IsAdminOrIsAuthenticatedPermission
 from rest_framework.decorators import action
 from review.serializers import RatingSerializer
-from review.models import Rating
+from review.models import Rating, Like
 from rest_framework.response import Response
 
 
@@ -75,10 +75,24 @@ class PostViewSet(viewsets.ModelViewSet):
             elif request.method == 'POST':
                 serializer.create(serializer.validated_data)
                 return Response(serializer.data, status=201)
+            
+    @action(['POST'], detail=True)
+    def like(self, request, pk=None):
+        post = self.get_object()
+        user = request.user
 
+        try:
+            like = Like.objects.get(post=post, author=user)
+            like.delete()
+            message = 'Disliked'
+            status = 204
+        except Like.DoesNotExist:
+            Like.objects.create(post=post, author=user)
+            message = 'Liked'
+            status = 201
+        return Response(message, status=status)
 
-
-
+        
     def get_serializer_class(self):
     
         if self.action == 'list':
