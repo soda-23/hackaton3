@@ -7,8 +7,9 @@ from django.utils.crypto import get_random_string
 class UserManeger(BaseUserManager):
     def _create(self, email, password, **extra_fields):
         if not email:
+        
             raise ValueError(
-                'Поле email не может бфть пустым'
+                'Поле email не может быть пустым'
             )
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
